@@ -22,36 +22,35 @@ class Theory:
         # load library
         self.__theory = ctypes.cdll.LoadLibrary("libclingo-dl.so")
 
-        # CLINGODL_VISIBILITY_DEFAULT bool clingodl_create_propagator(clingodl_propagator_t **propagator);
+        # bool create_propagator(propagator_t **propagator);
         self.__create_propagator = self.__fun(prefix, "create_propagator", c_bool, [POINTER(c_void_p)])
 
-        # CLINGODL_VISIBILITY_DEFAULT bool clingodl_destroy_propagator(clingodl_propagator_t *propagator);
+        # bool destroy_propagator(propagator_t *propagator);
         self.__destroy_propagator = self.__fun(prefix, "destroy_propagator", c_bool, [c_void_p])
 
-        # CLINGODL_VISIBILITY_DEFAULT bool clingodl_register_propagator(clingodl_propagator_t *propagator, clingo_control_t* control);
+        # bool register_propagator(propagator_t *propagator, clingo_control_t* control);
         self.__register_propagator = self.__fun(prefix, "register_propagator", c_bool, [c_void_p, c_void_p])
 
-        # CLINGODL_VISIBILITY_DEFAULT bool clingodl_register_options(clingodl_propagator_t *propagator, clingo_options_t* options);
+        # bool register_options(propagator_t *propagator, clingo_options_t* options);
         self.__register_options = self.__fun(prefix, "register_options", c_bool, [c_void_p, c_void_p])
 
-        # CLINGODL_VISIBILITY_DEFAULT bool clingodl_validate_options(clingodl_propagator_t *propagator);
+        # bool validate_options(propagator_t *propagator);
         self.__validate_options = self.__fun(prefix, "validate_options", c_bool, [c_void_p])
 
-        # CLINGODL_VISIBILITY_DEFAULT bool clingodl_on_model(clingodl_propagator_t *propagator, clingo_model_t* model);
+        # bool on_model(propagator_t *propagator, clingo_model_t* model);
         self.__on_model = self.__fun(prefix, "on_model", c_bool, [c_void_p, c_void_p])
 
-        # CLINGODL_VISIBILITY_DEFAULT void clingodl_assignment_begin(clingodl_propagator_t *propagator, uint32_t thread_id, size_t *index);
+        # void assignment_begin(propagator_t *propagator, uint32_t thread_id, size_t *index);
         self.__assignment_begin = self.__fun(prefix, "assignment_begin", c_bool, [c_void_p, c_uint, POINTER(c_size_t)])
 
-        # CLINGODL_VISIBILITY_DEFAULT bool clingodl_assignment_next(clingodl_propagator_t *propagator, uint32_t thread_id, size_t *index, clingo_symbol_t *name, clingodl_value_t* value, bool *result);
+        # bool assignment_next(propagator_t *propagator, uint32_t thread_id, size_t *index, clingo_symbol_t *name, value_t* value, bool *result);
         self.__assignment_next = self.__fun(prefix, "assignment_next", c_bool, [c_void_p, c_uint, POINTER(c_size_t), POINTER(c_uint64), POINTER(_c_variant), POINTER(c_bool)])
 
-        # CLINGODL_VISIBILITY_DEFAULT bool clingodl_on_statistics(clingodl_propagator_t *propagator, clingo_statistics_t* step, clingo_statistics_t* accu);
+        # bool on_statistics(propagator_t *propagator, clingo_statistics_t* step, clingo_statistics_t* accu);
         self.__on_statistics = self.__fun(prefix, "on_statistics", c_bool, [c_void_p, c_void_p, c_void_p])
 
         # create propagator
         self.__c_propagator = c_void_p()
-        print (self.__c_propagator)
         self.__create_propagator(byref(self.__c_propagator));
 
     def __del__(self):
