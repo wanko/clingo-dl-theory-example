@@ -20,7 +20,7 @@ class _c_variant(Structure):
 class Theory:
     def __init__(self, prefix, lib):
         # load library
-        self.__theory = ctypes.cdll.LoadLibrary("libclingo-dl.so")
+        self.__theory = ctypes.cdll.LoadLibrary(lib)
 
         # bool create_propagator(propagator_t **propagator);
         self.__create_propagator = self.__fun(prefix, "create_propagator", c_bool, [POINTER(c_void_p)])
