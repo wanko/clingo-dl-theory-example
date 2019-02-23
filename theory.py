@@ -69,24 +69,19 @@ class Theory:
         self.__destroy_propagator(self.__c_propagator)
 
     def register_propagator(self, control):
-        control_ptr = c_void_p(control._to_c)
-        self.__register_propagator(self.__c_propagator, control_ptr)
+        self.__register_propagator(self.__c_propagator, control._to_c)
 
     def register_options(self, options):
-        options_ptr = c_void_p(options._to_c)
-        self.__register_options(self.__c_propagator, options_ptr)
+        self.__register_options(self.__c_propagator, options._to_c)
 
     def validate_options(self):
         self.__validate_options(self.__c_propagator)
 
     def on_model(self, model):
-        model_ptr = c_void_p(model._to_c)
-        self.__on_model(self.__c_propagator, model_ptr)
+        self.__on_model(self.__c_propagator, model._to_c)
 
     def on_statistics(self, step, accu):
-        step_ptr = c_void_p(step._to_c)
-        accu_ptr = c_void_p(accu._to_c)
-        self.__on_statistics(self.__c_propagator, step_ptr, accu_ptr)
+        self.__on_statistics(self.__c_propagator, step._to_c, accu._to_c)
 
     def lookup_symbol(self, symbol):
         c_index = c_size_t()
@@ -114,12 +109,9 @@ class Theory:
             return None
 
     def assignment(self, thread_id):
-        c_id = c_uint(thread_id)
         c_index = c_size_t()
-        c_value = _c_variant()
-        c_name = c_uint64()
-        self.__assignment_begin(self.__c_propagator, c_id, byref(c_index))
-        while self.__assignment_next(self.__c_propagator, c_id, byref(c_index)):
+        self.__assignment_begin(self.__c_propagator, thread_id, byref(c_index))
+        while self.__assignment_next(self.__c_propagator, thread_id, byref(c_index)):
             yield (self.get_symbol(c_index), self.get_value(thread_id, c_index))
 
     def __fun(self, prefix, name, res, args, error=True):
