@@ -40,14 +40,26 @@ class Theory:
         # bool on_model(propagator_t *propagator, clingo_model_t* model);
         self.__on_model = self.__fun(prefix, "on_model", c_bool, [c_void_p, c_void_p])
 
-        # void assignment_begin(propagator_t *propagator, uint32_t thread_id, size_t *index);
-        self.__assignment_begin = self.__fun(prefix, "assignment_begin", c_bool, [c_void_p, c_uint, POINTER(c_size_t)])
-
-        # bool assignment_next(propagator_t *propagator, uint32_t thread_id, size_t *index, clingo_symbol_t *name, value_t* value, bool *result);
-        self.__assignment_next = self.__fun(prefix, "assignment_next", c_bool, [c_void_p, c_uint, POINTER(c_size_t), POINTER(c_uint64), POINTER(_c_variant), POINTER(c_bool)])
-
         # bool on_statistics(propagator_t *propagator, clingo_statistics_t* step, clingo_statistics_t* accu);
         self.__on_statistics = self.__fun(prefix, "on_statistics", c_bool, [c_void_p, c_void_p, c_void_p])
+
+        # bool lookup_symbol(propagator_t *propagator, clingo_symbol_t symbol, size_t *index);
+        self.__lookup_symbol = self.__fun(prefix, "lookup_symbol", c_bool, [c_void_p, c_uint64, POINTER(c_size_t)], False)
+
+        # clingo_symbol_t get_symbol(propagator_t *propagator, size_t index);
+        self.__get_symbol = self.__fun(prefix, "get_symbol", c_uint64, [c_void_p, c_size_t], False)
+
+        # void assignment_begin(propagator_t *propagator, uint32_t thread_id, size_t *index);
+        self.__assignment_begin = self.__fun(prefix, "assignment_begin", None, [c_void_p, c_uint, POINTER(c_size_t)], False)
+
+        # bool assignment_next(propagator_t *propagator, uint32_t thread_id, size_t *index);
+        self.__assignment_next = self.__fun(prefix, "assignment_next", c_bool, [c_void_p, c_uint, POINTER(c_size_t)], False)
+
+        # void assignment_has_value(propagator_t *propagator, uint32_t thread_id, size_t index);
+        self.__assignment_has_value = self.__fun(prefix, "assignment_has_value", c_bool, [c_void_p, c_uint, c_size_t], False)
+
+        # void assignment_get_value(propagator_t *propagator, uint32_t thread_id, size_t index, value_t *value);
+        self.__assignment_get_value = self.__fun(prefix, "assignment_get_value", None, [c_void_p, c_uint, c_size_t, POINTER(_c_variant)], False)
 
         # create propagator
         self.__c_propagator = c_void_p()
@@ -76,31 +88,48 @@ class Theory:
         accu_ptr = c_void_p(accu._to_c)
         self.__on_statistics(self.__c_propagator, step_ptr, accu_ptr)
 
+    def lookup_symbol(self, symbol):
+        c_index = c_size_t()
+        if self.__lookup_symbol(self.__c_propagator, symbol._to_c, byref(c_index)):
+            return c_index.value
+        else:
+            return None
+
+    def get_symbol(self, index):
+        return clingo._Symbol(self.__get_symbol(self.__c_propagator, index))
+
+    def has_value(self, thread_id, index):
+        return self.__assignment_has_value(self.__c_propagator, thread_id, index)
+
+    def get_value(self, thread_id, index):
+        c_value = _c_variant()
+        self.__assignment_get_value(self.__c_propagator, thread_id, index, byref(c_value))
+        if c_value.type == 0:
+            return c_value.value.integer
+        elif c_value.type == 1:
+            return c_value.value.double
+        elif c_value.type == 2:
+            return clingo._Symbol(c_value.value.symbol)
+        else:
+            return None
+
     def assignment(self, thread_id):
         c_id = c_uint(thread_id)
         c_index = c_size_t()
         c_value = _c_variant()
         c_name = c_uint64()
-        c_result = c_bool()
         self.__assignment_begin(self.__c_propagator, c_id, byref(c_index))
-        while True:
-            self.__assignment_next(self.__c_propagator, c_id, byref(c_index), byref(c_name), byref(c_value), byref(c_result))
-            if c_result.value:
-                name = clingo._Symbol(c_name.value)
-                if c_value.type == 0:
-                    yield (name, c_value.value.integer)
-                elif c_value.type == 1:
-                    yield (name, c_value.value.double)
-                elif c_value.type == 2:
-                    yield (name, clingo._Symbol(c_value.value.symbol))
-            else:
-                break
+        while self.__assignment_next(self.__c_propagator, c_id, byref(c_index)):
+            yield (self.get_symbol(c_index), self.get_value(thread_id, c_index))
 
-    def __fun(self, prefix, name, res, args):
+    def __fun(self, prefix, name, res, args, error=True):
         ret = self.__theory["{}_{}".format(prefix, name)]
         ret.restype  = res
         ret.argtypes = args
-        ret.errcheck = self.__handle_error
+        ret.errcheck = self.__handle_error if error else self.__skip_error
+        return ret
+
+    def __skip_error(self, ret, func, arguments):
         return ret
 
     def __handle_error(self, success, func, arguments):
