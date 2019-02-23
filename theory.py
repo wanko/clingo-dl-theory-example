@@ -19,6 +19,8 @@ class _c_variant(Structure):
 
 class Theory:
     def __init__(self, prefix, lib):
+        self.__c_propagator = None
+
         # load library
         self.__theory = ctypes.cdll.LoadLibrary(lib)
 
@@ -62,11 +64,13 @@ class Theory:
         self.__assignment_get_value = self.__fun(prefix, "assignment_get_value", None, [c_void_p, c_uint, c_size_t, POINTER(_c_variant)], False)
 
         # create propagator
-        self.__c_propagator = c_void_p()
-        self.__create_propagator(byref(self.__c_propagator));
+        c_propagator = c_void_p();
+        self.__create_propagator(byref(c_propagator));
+        self.__c_propagator = c_propagator
 
     def __del__(self):
-        self.__destroy_propagator(self.__c_propagator)
+        if self.__c_propagator is not None:
+            self.__destroy_propagator(self.__c_propagator)
 
     def register_propagator(self, control):
         self.__register_propagator(self.__c_propagator, control._to_c)
