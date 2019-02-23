@@ -71,6 +71,7 @@ class Theory:
     def __del__(self):
         if self.__c_propagator is not None:
             self.__destroy_propagator(self.__c_propagator)
+            self.__c_propagator = None
 
     def register_propagator(self, control):
         self.__register_propagator(self.__c_propagator, control._to_c)
