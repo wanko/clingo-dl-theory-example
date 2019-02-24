@@ -1,6 +1,3 @@
-# TODO:
-# - only having a way to lookup symbols in linear time is not sufficient
-
 import ctypes
 import clingo
 
