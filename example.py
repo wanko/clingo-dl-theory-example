@@ -43,7 +43,7 @@ class Application:
                 for name, value in self.__theory.assignment(model.thread_id):
                     sys.stdout.write(" {}={}".format(name, value))
                 sys.stdout.write("\n")
-                assert (self.__theory.has_value(model.thread_id, adjust))
-                sys.stdout.write("adjustment: {}\n".format(self.__theory.get_value(model.thread_id, adjust)))
+                if self.__theory.has_value(model.thread_id, adjust):
+                    sys.stdout.write("adjustment: {}\n".format(self.__theory.get_value(model.thread_id, adjust)))
 
 sys.exit(int(clingo.clingo_main(Application("test"), sys.argv[1:])))
