@@ -2,6 +2,7 @@ import ctypes
 import clingo
 
 from ctypes import c_bool, c_void_p, c_int, c_double, c_uint, c_uint64, c_size_t, Union, Structure, POINTER, byref
+import ctypes.util
 
 class _c_value(Union):
     _fields_ = [ ("integer", c_int)
@@ -19,7 +20,7 @@ class Theory:
         self.__c_propagator = None
 
         # load library
-        self.__theory = ctypes.cdll.LoadLibrary(lib)
+        self.__theory = ctypes.cdll.LoadLibrary(ctypes.util.find_library(lib))
 
         # bool create_propagator(propagator_t **propagator);
         self.__create_propagator = self.__fun(prefix, "create_propagator", c_bool, [POINTER(c_void_p)])

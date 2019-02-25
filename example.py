@@ -8,7 +8,7 @@ class Application:
     def __init__(self, name):
         self.program_name = name
         self.version = "1.0"
-        self.__theory = theory.Theory("clingodl", "libclingo-dl.so")
+        self.__theory = theory.Theory("clingodl", "clingo-dl")
 
     def __on_model(self, model):
         self.__theory.on_model(model)
