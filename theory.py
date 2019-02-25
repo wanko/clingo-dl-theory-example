@@ -1,8 +1,8 @@
 import ctypes
+import ctypes.util
 import clingo
 
 from ctypes import c_bool, c_void_p, c_int, c_double, c_uint, c_uint64, c_size_t, Union, Structure, POINTER, byref
-import ctypes.util
 
 class _c_value(Union):
     _fields_ = [ ("integer", c_int)
