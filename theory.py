@@ -2,7 +2,7 @@ import ctypes
 import ctypes.util
 import clingo
 
-from ctypes import c_bool, c_void_p, c_int, c_double, c_uint, c_uint64, c_size_t, Union, Structure, POINTER, byref
+from ctypes import c_bool, c_void_p, c_int, c_double, c_uint, c_uint64, c_size_t, c_char_p, Union, Structure, POINTER, byref
 
 class _c_value(Union):
     _fields_ = [ ("integer", c_int)
@@ -61,15 +61,21 @@ class Theory:
         # void assignment_get_value(propagator_t *propagator, uint32_t thread_id, size_t index, value_t *value);
         self.__assignment_get_value = self.__fun(prefix, "assignment_get_value", None, [c_void_p, c_uint, c_size_t, POINTER(_c_variant)], False)
 
+        #CLINGODL_VISIBILITY_DEFAULT bool clingodl_configure_propagator(clingodl_propagator_t *prop, char const *key, char const *value);
+        self.__configure_propagator = self.__fun(prefix, "configure_propagator", c_bool, [c_void_p, c_char_p, c_char_p])
+
         # create propagator
-        c_propagator = c_void_p();
-        self.__create_propagator(byref(c_propagator));
+        c_propagator = c_void_p()
+        self.__create_propagator(byref(c_propagator))
         self.__c_propagator = c_propagator
 
     def __del__(self):
         if self.__c_propagator is not None:
             self.__destroy_propagator(self.__c_propagator)
             self.__c_propagator = None
+
+    def configure_propagator(self, key, value):
+        self.__configure_propagator(self.__c_propagator, key.encode(), value.encode())
 
     def register_propagator(self, control):
         self.__register_propagator(self.__c_propagator, control._to_c)
@@ -119,7 +125,7 @@ class Theory:
 
     def __fun(self, prefix, name, res, args, error=True):
         ret = self.__theory["{}_{}".format(prefix, name)]
-        ret.restype  = res
+        ret.restype = res
         ret.argtypes = args
         ret.errcheck = self.__handle_error if error else self.__skip_error
         return ret
@@ -129,11 +135,11 @@ class Theory:
 
     def __handle_error(self, success, func, arguments):
         if not success:
+            msg = clingo._error_message()
             code = clingo._error_code()
-            msg  = clingo._error_message()
             if msg is None:
                 msg = "no message"
-            if code == 1 or code == 2 or code == 4:
+            if code in (1, 2, 4):
                 raise RuntimeError(msg)
             if code == 3:
                 raise MemoryError(msg)

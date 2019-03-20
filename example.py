@@ -25,6 +25,7 @@ class Application:
         pass
 
     def main(self, prg, files):
+        self.__theory.configure_propagator("propagate", "full,1")
         self.__theory.register_propagator(prg)
         for f in files:
             prg.load(f)
